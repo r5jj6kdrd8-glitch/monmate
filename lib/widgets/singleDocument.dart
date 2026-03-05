@@ -137,19 +137,15 @@ class _SingleDocumentState extends State<SingleDocument> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          color: widget.selectable.isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onInverseSurface,
-          borderRadius: const BorderRadius.all(Radius.circular(15))),
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      color: widget.selectable.isSelected ? scheme.primary : null,
       child: ListTile(
         selected: widget.selectable.isSelected,
         contentPadding:
-            const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(15))),
-        selectedColor: Theme.of(context).colorScheme.onPrimary,
+            const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        selectedColor: scheme.onPrimary,
         dense: true,
         onTap: () => widget.onClick(widget.index, SelectType.navigate),
         onLongPress: () => widget.onClick(widget.index, SelectType.longPress),
@@ -158,24 +154,45 @@ class _SingleDocumentState extends State<SingleDocument> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(CupertinoIcons.doc_text_fill,
-                  color: widget.selectable.isSelected
-                      ? Theme.of(context).colorScheme.onPrimary
-                      : Theme.of(context).colorScheme.inverseSurface),
-              const SizedBox(width: 3, height: 1),
-              Text(widget.selectable.item['_id'].toString()),
-              const Spacer(),
+              Icon(
+                CupertinoIcons.doc_text_fill,
+                color: widget.selectable.isSelected
+                    ? scheme.onPrimary
+                    : scheme.primary,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  widget.selectable.item['_id'].toString(),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color:
+                        widget.selectable.isSelected ? scheme.onPrimary : null,
+                  ),
+                ),
+              ),
               widget.selectable.isSelected
                   ? Icon(CupertinoIcons.check_mark_circled_solid,
-                      color: Theme.of(context).colorScheme.onPrimary)
+                      color: scheme.onPrimary)
                   : (widget.hasAnySelected
-                      ? Icon(CupertinoIcons.circle,
-                          color: Theme.of(context).colorScheme.inverseSurface)
-                      : Container())
+                      ? Icon(CupertinoIcons.circle, color: scheme.outline)
+                      : const SizedBox.shrink())
             ],
           ),
         ),
-        subtitle: Visibility(visible: widget.showDetails, child: visualize()),
+        subtitle: Visibility(
+          visible: widget.showDetails,
+          child: DefaultTextStyle(
+            style: TextStyle(
+              color: widget.selectable.isSelected
+                  ? scheme.onPrimary.withValues(alpha: 0.9)
+                  : scheme.onSurfaceVariant,
+            ),
+            child: visualize(),
+          ),
+        ),
       ),
     );
   }

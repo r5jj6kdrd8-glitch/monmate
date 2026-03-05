@@ -23,48 +23,70 @@ class SingleConnection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      color: selectable.isSelected ? scheme.primary : null,
       child: ListTile(
         selected: selectable.isSelected,
-        contentPadding: const EdgeInsets.fromLTRB(0, 10, 20, 10),
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(15))),
-        tileColor: Theme.of(context).colorScheme.onInverseSurface,
-        selectedTileColor: Theme.of(context).colorScheme.primary,
-        selectedColor: Theme.of(context).colorScheme.onPrimary,
+        contentPadding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
+        selectedColor: scheme.onPrimary,
         minLeadingWidth: 12,
         horizontalTitleGap: 8,
         leading: ReorderableDragStartListener(
           index: index,
-          child: Container(
-              width: 22,
-              alignment: Alignment.centerLeft,
-              child: const Icon(Icons.drag_handle, size: 20)),
+          child: SizedBox(
+            width: 24,
+            child: Icon(Icons.drag_handle,
+                size: 20,
+                color: selectable.isSelected
+                    ? scheme.onPrimary.withValues(alpha: 0.86)
+                    : scheme.onSurfaceVariant),
+          ),
         ),
         onTap: () => onClick(index, SelectType.tap),
         onLongPress: () => onClick(index, SelectType.longPress),
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Icon(CupertinoIcons.cube_box,
-                color: selectable.isSelected
-                    ? Theme.of(context).colorScheme.onPrimary
-                    : Theme.of(context).colorScheme.inverseSurface),
-            const SizedBox(width: 5, height: 1),
+            Icon(
+              CupertinoIcons.cube_box_fill,
+              color: selectable.isSelected ? scheme.onPrimary : scheme.primary,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
             Flexible(
-                child: Text(selectable.item.name,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: false,
-                    maxLines: 1))
+              child: Text(
+                selectable.item.name,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                maxLines: 1,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                  color: selectable.isSelected ? scheme.onPrimary : null,
+                ),
+              ),
+            ),
           ],
         ),
-        subtitle: Text(_obfuscateUri(selectable.item.uri),
-            overflow: TextOverflow.ellipsis, softWrap: false, maxLines: 1),
-        isThreeLine: false,
+        subtitle: Text(
+          _obfuscateUri(selectable.item.uri),
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+          maxLines: 1,
+          style: TextStyle(
+            color: selectable.isSelected
+                ? scheme.onPrimary.withValues(alpha: 0.85)
+                : scheme.onSurfaceVariant,
+          ),
+        ),
         trailing: selectable.isSelected
-            ? const Icon(CupertinoIcons.check_mark_circled_solid)
-            : (isAnySelected ? const Icon(CupertinoIcons.circle) : null),
+            ? Icon(CupertinoIcons.check_mark_circled_solid,
+                color: scheme.onPrimary)
+            : (isAnySelected
+                ? Icon(CupertinoIcons.circle, color: scheme.outline)
+                : null),
       ),
     );
   }

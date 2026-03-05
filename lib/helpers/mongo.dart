@@ -7,6 +7,7 @@ class MongoHelper {
   static final MongoHelper _mongoService = MongoHelper._internal();
   Db? _database;
   String _lastConnectedUri = '';
+  Future<void> _countQueue = Future.value();
 
   factory MongoHelper() {
     return _mongoService;
@@ -60,12 +61,71 @@ class MongoHelper {
   }
 
   Future<int> getRecordCount(String collection) async {
+    final completer = Completer<int>();
+    _countQueue = _countQueue.then((_) async {
+      try {
+        await reconnect();
+        final db = _database;
+        if (db == null || !db.isConnected) {
+          completer.complete(-1);
+          return;
+        }
+        // Force master selection before trying count commands.
+        db.masterConnection;
+        final coll = db.collection(collection);
+        try {
+          completer.complete(await coll.count());
+        } catch (_) {
+          final result = await coll.aggregateToStream(const [
+            {r'$count': 'total'}
+          ]).toList();
+          completer.complete(
+            result.isEmpty ? 0 : (result.first['total'] as num?)?.toInt() ?? 0,
+          );
+        }
+      } catch (_) {
+        completer.complete(-1);
+      }
+    });
+    return completer.future;
+  }
+
+  Future<List<String>> getCollectionFieldSuggestions(String collection,
+      {int sampleSize = 40}) async {
+    final fields = <String>{};
     try {
       await reconnect();
-      return await _database!.collection(collection).count();
-    } catch (e) {
-      return -1;
+      final docs = await _database!
+          .collection(collection)
+          .modernFind()
+          .take(sampleSize)
+          .toList();
+
+      void collect(dynamic value, String prefix) {
+        if (value is Map<String, dynamic>) {
+          for (final entry in value.entries) {
+            final key = prefix.isEmpty ? entry.key : '$prefix.${entry.key}';
+            fields.add(key);
+            collect(entry.value, key);
+          }
+        } else if (value is List) {
+          if (prefix.isNotEmpty) {
+            fields.add(prefix);
+          }
+          for (final element in value) {
+            collect(element, prefix);
+          }
+        }
+      }
+
+      for (final doc in docs) {
+        collect(doc, '');
+      }
+    } catch (_) {
+      // Best-effort helper; ignore failures.
     }
+    final list = fields.toList()..sort();
+    return list;
   }
 
   Future<void> createCollection(String name) async {

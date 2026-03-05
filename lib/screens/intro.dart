@@ -1,9 +1,10 @@
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mongo_mate/utilities/AdRepository.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mongo_mate/screens/home.dart';
+import 'package:mongo_mate/utilities/AdRepository.dart';
+import 'package:mongo_mate/widgets/app_background.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IntroPage extends StatefulWidget {
   const IntroPage({Key? key}) : super(key: key);
@@ -14,42 +15,19 @@ class IntroPage extends StatefulWidget {
 
 class _IntroPageState extends State<IntroPage> {
   final PageController _pageController = PageController();
-  final TextEditingController _nameController = TextEditingController();
   int _currentPage = 0;
-  // bool _isNameValid = false;
-  // bool _nameSubmitted = false;
   bool _continued = false;
   bool _showPrivacyPage = false;
 
   @override
   void dispose() {
     _pageController.dispose();
-    _nameController.dispose();
     super.dispose();
   }
-
-  // void _submitName() {
-  //   if (_nameController.text.trim().length >= 2) {
-  //     setState(() {
-  //       _nameSubmitted = true;
-  //     });
-  //     Future.delayed(const Duration(seconds: 2), () {
-  //       setState(() {
-  //         _showPrivacyPage = true;
-  //       });
-  //     });
-  //   } else {
-  //     setState(() {
-  //       _isNameValid = false;
-  //     });
-  //   }
-  // }
 
   void _continue() {
     setState(() {
       _continued = true;
-    });
-    setState(() {
       _showPrivacyPage = true;
     });
   }
@@ -76,42 +54,56 @@ class _IntroPageState extends State<IntroPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       body: _showPrivacyPage
-          ? SafeArea(child: _buildPrivacyPage())
+          ? AppBackground(child: SafeArea(child: _buildPrivacyPage()))
           : _continued
-              ? SafeArea(child: _buildWelcomeAnimation())
-              : SafeArea(child: _buildOnboarding()),
+              ? AppBackground(child: SafeArea(child: _buildWelcomeAnimation()))
+              : AppBackground(child: SafeArea(child: _buildOnboarding())),
     );
   }
 
   Widget _buildOnboarding() {
     return Column(
       children: [
+        const SizedBox(height: 18),
+        Text(
+          'MonMate',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.6,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'MongoDB companion for iPhone',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 8),
         Expanded(
           child: PageView(
             controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            children: [
-              _buildPage(
-                image: Icons.storage_rounded,
-                title: "Welcome to MonMate",
-                description: "Manage MongoDB with MonMate!",
-              ),
-              _buildPage(
-                image: Icons.cable_rounded,
-                title: "Database Management",
+            onPageChanged: (index) => setState(() => _currentPage = index),
+            children: const [
+              _OnboardingCard(
+                icon: CupertinoIcons.cube_box_fill,
+                title: 'Compass-like control',
                 description:
-                    "Create, edit, and delete connections, collections, and documents. Enjoy built-in editor, sorting, and filtering.",
+                    'Manage MongoDB collections and documents in a native iOS-first interface.',
               ),
-              _buildPage(
-                image: Icons.search_rounded,
-                title: "Query Sorting and Filtering",
+              _OnboardingCard(
+                icon: CupertinoIcons.link_circle_fill,
+                title: 'Fast connection switching',
                 description:
-                    "Run your queries with precision. Sort and filter your data to quickly find exactly what you're looking for. MonMate's powerful querying capabilities make data retrieval efficient and effective.",
+                    'Jump across deployments, edit records quickly, and move through your data with less friction.',
+              ),
+              _OnboardingCard(
+                icon: CupertinoIcons.search_circle_fill,
+                title: 'Filter and sort instantly',
+                description:
+                    'Use Mongo-style queries and sort definitions to narrow down exactly what matters.',
               ),
             ],
           ),
@@ -119,87 +111,67 @@ class _IntroPageState extends State<IntroPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(3, (index) {
-            return Container(
+            final selected = _currentPage == index;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
               margin: const EdgeInsets.all(4),
-              width: 8,
+              width: selected ? 22 : 8,
               height: 8,
               decoration: BoxDecoration(
-                color:
-                    _currentPage == index ? Colors.orangeAccent : Colors.grey,
-                shape: BoxShape.circle,
+                color: selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(99),
               ),
             );
           }),
         ),
         Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // TextField(
-              //   controller: _nameController,
-              //   onChanged: (value) {
-              //     setState(() {
-              //       _isNameValid = value.trim().length >= 2;
-              //     });
-              //   },
-              //   decoration: InputDecoration(
-              //     labelText: "Enter your name",
-              //     border: OutlineInputBorder(),
-              //   ),
-              // ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _continue,
-                child: const Text("Continue"),
-              ),
-            ],
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _continue,
+              icon: const Icon(CupertinoIcons.arrow_right),
+              label: const Text('Continue'),
+            ),
           ),
-        ),
+        )
       ],
-    );
-  }
-
-  Widget _buildPage({
-    required IconData image,
-    required String title,
-    required String description,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(image, size: 100, color: Colors.orangeAccent),
-          const SizedBox(height: 24),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            description,
-            style: const TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildWelcomeAnimation() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.check_circle, size: 100, color: Colors.green),
-          const SizedBox(height: 24),
-          Text(
-            "Welcome, ${_nameController.text.trim()}!",
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: GlassPanel(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                CupertinoIcons.check_mark_circled_solid,
+                size: 76,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Ready to go',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Let\'s set up your privacy preferences.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text("Let’s set up your privacy preferences."),
-        ],
+        ),
       ),
     );
   }
@@ -207,26 +179,80 @@ class _IntroPageState extends State<IntroPage> {
   Widget _buildPrivacyPage() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20),
+        child: GlassPanel(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.lock_shield_fill,
+                  size: 70, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 20),
+              Text(
+                'Privacy Settings',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'To keep MonMate free, we request tracking permission for personalized ads. You can still continue if declined.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _requestATT,
+                  child: const Text('Continue'),
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OnboardingCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _OnboardingCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: GlassPanel(
+        padding: const EdgeInsets.fromLTRB(20, 26, 20, 26),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.privacy_tip,
-                size: 100, color: Colors.orangeAccent),
+            Icon(icon, size: 66, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 24),
-            const Text(
-              "Privacy Settings",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "To keep this app free, we'd like your permission to track your activity for personalized ads.",
+            Text(
+              title,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _requestATT,
-              child: const Text("Continue"),
+            const SizedBox(height: 14),
+            Text(
+              description,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

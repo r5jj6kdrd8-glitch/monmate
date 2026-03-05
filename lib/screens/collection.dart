@@ -6,7 +6,7 @@ import 'package:mongo_mate/schemas/collection.dart';
 import 'package:mongo_mate/schemas/selectable.dart';
 import 'package:mongo_mate/screens/document.dart';
 import 'package:mongo_mate/widgets/adBanner.dart';
-import 'package:mongo_mate/widgets/adNative.dart';
+import 'package:mongo_mate/widgets/app_background.dart';
 import 'package:mongo_mate/widgets/confirmDialog.dart';
 import 'package:mongo_mate/widgets/singleCollection.dart';
 
@@ -21,24 +21,23 @@ class CollectionScreen extends StatefulWidget {
 class _CollectionState extends State<CollectionScreen> {
   bool isLoading = false;
   final TextEditingController _name = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   List<Selectable<Collection>> collections = <Selectable<Collection>>[];
 
   Future<void> getRecordCounts() async {
-    Iterable<Future<int>> futures =
-        collections.map((q) => MongoHelper().getRecordCount(q.item.name));
-    List<int> counts = await Future.wait(futures);
-    setState(() {
-      for (int i = 0; i < counts.length; i++) {
-        collections[i].item.count = counts[i];
-      }
-    });
+    for (final selectable in collections) {
+      final count = await MongoHelper().getRecordCount(selectable.item.name);
+      if (!mounted) return;
+      setState(() {
+        // Keep loading state when count cannot be retrieved.
+        selectable.item.count = count >= 0 ? count : -2;
+      });
+    }
   }
 
   Future<void> getCollections() async {
-    setState(() {
-      isLoading = true;
-    });
-    var names = await MongoHelper().getCollectionNames();
+    setState(() => isLoading = true);
+    final names = await MongoHelper().getCollectionNames();
     setState(() {
       collections = names.map((e) => Selectable(Collection(e))).toList();
       isLoading = false;
@@ -49,92 +48,89 @@ class _CollectionState extends State<CollectionScreen> {
   void selectHandler(int index, SelectType type) {
     if (type == SelectType.tap) {
       if (collections.any((element) => element.isSelected)) {
-        setState(() {
-          collections[index].select();
-        });
+        setState(() => collections[index].select());
       } else {
         HapticFeedback.lightImpact();
         Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    DocumentScreen(name: collections[index].item.name)));
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DocumentScreen(name: collections[index].item.name),
+          ),
+        );
       }
     } else {
-      setState(() {
-        HapticFeedback.mediumImpact();
-        collections[index].select();
-      });
+      HapticFeedback.mediumImpact();
+      setState(() => collections[index].select());
     }
   }
 
   Future<void> create(String collectionName) async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
     await MongoHelper().createCollection(collectionName);
-    setState(() {
-      isLoading = false;
-    });
+    setState(() => isLoading = false);
     getCollections();
   }
 
   Future<void> createHandler() async {
     HapticFeedback.mediumImpact();
+    _name.clear();
+
     showModalBottomSheet<void>(
       isScrollControlled: true,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setState) {
-            // Track whether the field is empty
-            bool isNameEmpty = _name.text.isEmpty;
+          builder: (context, setLocalState) {
+            final isNameEmpty = _name.text.isEmpty;
 
-            return SafeArea(
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Create Collection',
-                        style: Theme.of(context).textTheme.headlineMedium),
-                    const SizedBox(height: 10.0),
-                    TextField(
-                      controller: _name,
-                      decoration: const InputDecoration(labelText: "Name"),
-                      textInputAction: TextInputAction.done,
-                      onChanged: (value) {
-                        // Update the state when text changes
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 10.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        const SizedBox(width: 10.0),
-                        ElevatedButton(
-                          // Disable button if name is empty
-                          onPressed: isNameEmpty
-                              ? null
-                              : () {
-                                  create(_name.text);
-                                  Navigator.pop(context);
-                                  _name.clear();
-                                },
-                          child: const Text('Create'),
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: MediaQuery.of(context).viewInsets.bottom,
-                    ),
-                  ],
-                ),
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                18,
+                8,
+                18,
+                MediaQuery.of(context).viewInsets.bottom + 18,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Create Collection',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _name,
+                    decoration:
+                        const InputDecoration(labelText: 'Collection name'),
+                    textInputAction: TextInputAction.done,
+                    onChanged: (_) => setLocalState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: isNameEmpty
+                            ? null
+                            : () {
+                                create(_name.text);
+                                Navigator.pop(context);
+                              },
+                        child: const Text('Create'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             );
           },
@@ -145,27 +141,25 @@ class _CollectionState extends State<CollectionScreen> {
 
   Future<void> deleteHandler() async {
     HapticFeedback.mediumImpact();
-    bool? delete = await showDialog(
-        context: context,
-        builder: (ctx) {
-          return ConfirmDialog().build(context, 'Delete Collection(s)',
-              'Are you sure you want to delete?', 'Cancel', 'Delete');
-        });
+    final delete = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return ConfirmDialog().build(context, 'Delete Collection(s)',
+            'Are you sure you want to delete?', 'Cancel', 'Delete');
+      },
+    );
+
     if (delete == true) {
-      setState(() {
-        isLoading = true;
-      });
-      Iterable<Future<bool>> futures = collections
+      setState(() => isLoading = true);
+      final futures = collections
           .where((element) => element.isSelected)
           .map((q) => MongoHelper().deleteCollection(q.item.name));
       await Future.wait(futures);
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       getCollections();
     } else {
       setState(() {
-        for (var element in collections) {
+        for (final element in collections) {
           element.isSelected = false;
         }
       });
@@ -175,69 +169,148 @@ class _CollectionState extends State<CollectionScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() => setState(() {}));
     getCollections();
   }
 
   @override
+  void dispose() {
+    _name.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hasSelection = collections.any((element) => element.isSelected);
+    final query = _searchController.text.trim().toLowerCase();
+    final visibleCollections = query.isEmpty
+        ? collections
+        : collections
+            .where((c) => c.item.name.toLowerCase().contains(query))
+            .toList();
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(widget.name),
         actions: [
-          collections.any((element) => element.isSelected)
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.2),
+                ),
+              ),
+            ),
+          hasSelection
               ? IconButton(
                   onPressed: deleteHandler,
-                  icon: const Icon(CupertinoIcons.delete))
+                  icon: const Icon(CupertinoIcons.delete),
+                )
               : IconButton(
                   onPressed: createHandler,
-                  icon: const Icon(CupertinoIcons.add))
+                  icon: const Icon(CupertinoIcons.add),
+                )
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: getCollections,
-        child: collections.isEmpty
-            ? const SizedBox(
-                // height: netHeight,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      body: AppBackground(
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: getCollections,
+            child: collections.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      Icon(
-                        CupertinoIcons.folder,
-                        size: 100,
-                        color: CupertinoColors.inactiveGray,
+                      const SizedBox(height: 120),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: GlassPanel(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.folder_solid,
+                                size: 74,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                'No collections found',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      SizedBox(height: 20),
-                      Text("No collection found")
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                        child: CupertinoSearchTextField(
+                          controller: _searchController,
+                          placeholder: 'Search collections',
+                        ),
+                      ),
+                      Expanded(
+                        child: visibleCollections.isEmpty
+                            ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  const SizedBox(height: 80),
+                                  Center(
+                                    child: Text(
+                                      'No collections match your search',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : CupertinoScrollbar(
+                                child: ListView.separated(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 20, horizontal: 12),
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: 2),
+                                  itemCount: visibleCollections.length + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index == 0) {
+                                      return const AdBanner(bottomSpacing: 12);
+                                    }
+
+                                    final selectable =
+                                        visibleCollections[index - 1];
+                                    final originalIndex =
+                                        collections.indexOf(selectable);
+
+                                    return SingleCollection(
+                                      index: originalIndex,
+                                      selectable: selectable,
+                                      isAnySelected: hasSelection,
+                                      onClick: selectHandler,
+                                    );
+                                  },
+                                ),
+                              ),
+                      ),
                     ],
                   ),
-                ),
-              )
-            : CupertinoScrollbar(
-                child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20, horizontal: 15),
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 10),
-                    itemCount: collections.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        // Insert your ad widget here
-                        // return NativeAdWidget(); // Replace AdWidget with your actual ad widget
-                        return AdBanner(
-                          key: UniqueKey(),
-                        );
-                      } else {
-                        var adjustedIndex = index > 0 ? index - 1 : index;
-                        return SingleCollection(
-                            index: adjustedIndex,
-                            selectable: collections[adjustedIndex],
-                            isAnySelected: collections
-                                .any((element) => element.isSelected),
-                            onClick: selectHandler);
-                      }
-                    })),
+          ),
+        ),
       ),
     );
   }

@@ -20,11 +20,11 @@ class SingleCollection extends StatelessWidget {
     switch (selectable.item.count) {
       case -2:
         {
-          return '...';
+          return 'Loading';
         }
       case -1:
         {
-          return '!';
+          return '';
         }
       case 0:
         {
@@ -43,43 +43,68 @@ class SingleCollection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      selected: selectable.isSelected,
-      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(15))),
-      tileColor: Theme.of(context).colorScheme.onInverseSurface,
-      selectedTileColor: Theme.of(context).colorScheme.primary,
-      selectedColor: Theme.of(context).colorScheme.onPrimary,
-      onTap: () => onClick(index, SelectType.tap),
-      onLongPress: () => onClick(index, SelectType.longPress),
-      title: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Icon(CupertinoIcons.folder,
-              color: selectable.isSelected
-                  ? Theme.of(context).colorScheme.onPrimary
-                  : Theme.of(context).colorScheme.inverseSurface),
-          const SizedBox(width: 5, height: 1),
-          Flexible(
-              child: Text(selectable.item.name,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  maxLines: 1))
-        ],
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      color: selectable.isSelected ? scheme.primary : null,
+      child: ListTile(
+        selected: selectable.isSelected,
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+        selectedColor: scheme.onPrimary,
+        onTap: () => onClick(index, SelectType.tap),
+        onLongPress: () => onClick(index, SelectType.longPress),
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Icon(
+              CupertinoIcons.folder_fill,
+              color: selectable.isSelected ? scheme.onPrimary : scheme.primary,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                selectable.item.name,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                maxLines: 1,
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: selectable.isSelected ? scheme.onPrimary : null),
+              ),
+            )
+          ],
+        ),
+        subtitle: Row(
+          children: [
+            if (selectable.item.count >= 0 || selectable.item.count == -2) ...[
+              Text(
+                getDocumentText(),
+                style: TextStyle(
+                  color: selectable.isSelected
+                      ? scheme.onPrimary.withValues(alpha: 0.85)
+                      : scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                CupertinoIcons.doc_fill,
+                size: 12,
+                color: selectable.isSelected
+                    ? scheme.onPrimary.withValues(alpha: 0.85)
+                    : scheme.onSurfaceVariant,
+              ),
+            ],
+          ],
+        ),
+        trailing: selectable.isSelected
+            ? Icon(CupertinoIcons.check_mark_circled_solid,
+                color: scheme.onPrimary)
+            : (isAnySelected
+                ? Icon(CupertinoIcons.circle, color: scheme.outline)
+                : null),
       ),
-      subtitle: Row(
-        children: [
-          Text(getDocumentText()),
-          const Icon(
-            CupertinoIcons.doc_fill,
-            size: 11,
-          )
-        ],
-      ),
-      trailing: selectable.isSelected
-          ? const Icon(CupertinoIcons.check_mark_circled_solid)
-          : (isAnySelected ? const Icon(CupertinoIcons.circle) : null),
     );
   }
 }

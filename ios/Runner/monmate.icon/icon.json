@@ -1,0 +1,43 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.86328,0.47705,0.20923,1.00000",
+      "display-p3:0.57189,0.29392,0.11584,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "display-p3:0.95345,1.00000,0.92772,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "monmate.png",
+          "name" : "monmate",
+          "position" : {
+            "scale" : 0.85,
+            "translation-in-points" : [
+              -4.671875,
+              -42.86875
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

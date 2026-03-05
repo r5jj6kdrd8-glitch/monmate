@@ -1,12 +1,15 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mongo_mate/screens/intro.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mongo_mate/helpers/toast.dart';
 import 'package:mongo_mate/screens/home.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:mongo_mate/utilities/AdRepository.dart';
+import 'package:mongo_mate/utilities/app_theme.dart';
+import 'package:mongo_mate/utilities/subscription_service.dart';
+import 'package:mongo_mate/widgets/app_background.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -15,6 +18,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await SubscriptionService.instance.init();
 
   FlutterError.onError = (errorDetails) {
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
@@ -32,19 +36,21 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: ToastHelper.scaffoldMessengerKey,
       home: const InitialScreen(),
-      theme: ThemeData(
-          brightness: Brightness.light,
-          colorScheme: const ColorScheme.light(
-              primary: Colors.deepOrange,
-              secondary: Colors.deepOrangeAccent,
-              onInverseSurface: Color.fromARGB(255, 242, 242, 242))),
-      darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          colorScheme: const ColorScheme.dark(
-              primary: Colors.orange,
-              secondary: Colors.orangeAccent,
-              onInverseSurface: Color.fromARGB(255, 27, 27, 27))),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        SystemChrome.setSystemUIOverlayStyle(
+          SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+          ),
+        );
+        return child ?? const SizedBox.shrink();
+      },
     );
   }
 }
@@ -80,9 +86,11 @@ class _InitialScreenState extends State<InitialScreen> {
   Widget build(BuildContext context) {
     // Show a loading screen while checking the intro status
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
+      return Scaffold(
+        body: AppBackground(
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
         ),
       );
     }
