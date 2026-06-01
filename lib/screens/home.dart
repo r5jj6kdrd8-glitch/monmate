@@ -287,7 +287,7 @@ class _HomePageState extends State<HomePage> {
                         style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(height: 12),
                     Text(
-                      'MonMate helps you manage MongoDB on iOS with a touch-first interface for connections, collections, and documents.',
+                      'MonMate helps you manage MongoDB for connections, collections, and documents.',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 14),

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mongo_mate/helpers/toast.dart';
@@ -81,8 +82,12 @@ class SubscriptionPage extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           service.isPro
-                              ? 'Your subscription is active for this Apple ID.'
-                              : 'Choose monthly or annual and manage your plan in App Store subscriptions.',
+                              ? (Platform.isAndroid
+                                  ? 'Your subscription is active for this Google Account.'
+                                  : 'Your subscription is active for this Apple ID.')
+                              : (Platform.isAndroid
+                                  ? 'Choose monthly or annual and manage your plan in Google Play subscriptions.'
+                                  : 'Choose monthly or annual and manage your plan in App Store subscriptions.'),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         if (service.lastError != null) ...[
@@ -141,8 +146,9 @@ class SubscriptionPage extends StatelessWidget {
                                 : () async {
                                     await service.restorePurchases();
                                     if (context.mounted) {
-                                      ToastHelper.show(
-                                          'Restore request sent to App Store');
+                                      ToastHelper.show(Platform.isAndroid
+                                          ? 'Restore request sent to Google Play'
+                                          : 'Restore request sent to App Store');
                                     }
                                   },
                             child: const Text('Restore Purchases'),
@@ -165,7 +171,9 @@ class SubscriptionPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. You can manage or cancel anytime in App Store subscriptions.',
+                          Platform.isAndroid
+                              ? 'Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. You can manage or cancel anytime in Google Play subscriptions.'
+                              : 'Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. You can manage or cancel anytime in App Store subscriptions.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 10),
@@ -181,14 +189,15 @@ class SubscriptionPage extends StatelessWidget {
                               icon: const Icon(CupertinoIcons.shield_fill),
                               label: const Text('Privacy Policy'),
                             ),
-                            OutlinedButton.icon(
-                              onPressed: () => _openUrl(
-                                Uri.parse(
-                                    'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'),
+                            if (Platform.isIOS)
+                              OutlinedButton.icon(
+                                onPressed: () => _openUrl(
+                                  Uri.parse(
+                                      'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'),
+                                ),
+                                icon: const Icon(CupertinoIcons.doc_text),
+                                label: const Text('Apple EULA'),
                               ),
-                              icon: const Icon(CupertinoIcons.doc_text),
-                              label: const Text('Apple EULA'),
-                            ),
                           ],
                         ),
                       ],

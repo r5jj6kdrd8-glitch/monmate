@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -76,7 +77,7 @@ class _IntroPageState extends State<IntroPage> {
         ),
         const SizedBox(height: 6),
         Text(
-          'MongoDB companion for iPhone',
+          Platform.isIOS ? 'MongoDB companion for iPhone' : 'MongoDB companion for Android',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -86,20 +87,21 @@ class _IntroPageState extends State<IntroPage> {
           child: PageView(
             controller: _pageController,
             onPageChanged: (index) => setState(() => _currentPage = index),
-            children: const [
+            children: [
               _OnboardingCard(
                 icon: CupertinoIcons.cube_box_fill,
                 title: 'Compass-like control',
-                description:
-                    'Manage MongoDB collections and documents in a native iOS-first interface.',
+                description: Platform.isIOS
+                    ? 'Manage MongoDB collections and documents in a native iOS-first interface.'
+                    : 'Manage MongoDB collections and documents in a native Android interface.',
               ),
-              _OnboardingCard(
+              const _OnboardingCard(
                 icon: CupertinoIcons.link_circle_fill,
                 title: 'Fast connection switching',
                 description:
                     'Jump across deployments, edit records quickly, and move through your data with less friction.',
               ),
-              _OnboardingCard(
+              const _OnboardingCard(
                 icon: CupertinoIcons.search_circle_fill,
                 title: 'Filter and sort instantly',
                 description:

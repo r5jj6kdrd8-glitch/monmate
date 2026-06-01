@@ -24,10 +24,7 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
@@ -52,6 +49,14 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyDrAFl0xVHDF-QZsZ05I0IZ3Fip2VuCBpQ',
+    appId: '1:1054562391414:android:09a9810db6ea1f7f989657',
+    messagingSenderId: '1054562391414',
+    projectId: 'mongomate',
+    storageBucket: 'mongomate.firebasestorage.app',
+  );
+
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyC73zUh35hrtJpSZBUgJpK7HIkOOTHvZ9c',
     appId: '1:1054562391414:ios:85f68d80a6559a4d989657',
@@ -60,5 +65,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'mongomate.appspot.com',
     iosBundleId: 'com.pahlavan.monmate',
   );
+
 
 }

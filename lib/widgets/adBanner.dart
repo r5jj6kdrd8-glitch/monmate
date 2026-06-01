@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mongo_mate/utilities/subscription_service.dart';
+import 'package:mongo_mate/utilities/ad_helper.dart';
 
 class AdBanner extends StatefulWidget {
   final AdSize adSize;
@@ -100,7 +101,7 @@ class _AdBannerState extends State<AdBanner> {
 
     final bannerAd = BannerAd(
       size: adaptiveSize,
-      adUnitId: "ca-app-pub-2515394026864338/4245537509",
+      adUnitId: AdHelper.bannerAdUnitId,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
