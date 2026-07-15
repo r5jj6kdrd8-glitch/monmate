@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-$FlutterEnableSwiftPackageManager = false
+$FlutterUseSwiftPackageManager = false
 platform :ios, '15.0'
 install! 'cocoapods',
   :disable_input_output_paths => true
